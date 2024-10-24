@@ -1,0 +1,11 @@
+// This script deletes all documents in the 'school' collection where the name is "Holberton school"
+
+// Use the 'remove()' method to delete all matching documents
+// db.school.remove(
+//     { name: "Holberton school" }  // Match condition: documents with name "Holberton school"
+// );
+
+// Use the 'deleteMany()' method to delete all matching documents
+db.school.deleteMany(
+    { name: "Holberton school" }  // Match condition: documents with name "Holberton school"
+);

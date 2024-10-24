@@ -1,0 +1,10 @@
+// This script displays the number of documents in the collection named 'school'.
+
+// Here, "my_db" is the database name passed as an argument
+// db = db.getSiblingDB("my_db");
+
+// Use the 'countDocuments()' method to count the number of documents in the 'school' collection
+// db.school.countDocuments();
+
+// Use the 'count()' method to count the number of documents in the 'school' collection
+db.school.count();

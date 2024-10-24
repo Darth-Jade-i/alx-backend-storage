@@ -1,0 +1,10 @@
+// List all documents in the collection "school"
+// Use the database passed as an option to the mongosh command
+
+// Here, "my_db" is the database name passed as an argument
+// db = db.getSiblingDB("my_db");
+
+// Find all documents in the "school" collection and print them
+// db.school.find().forEach(printjson);
+
+db.school.find();

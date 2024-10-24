@@ -1,0 +1,9 @@
+// 100-find
+// This script lists all documents with a name starting with "Holberton"
+// in the "school" collection of the database passed as an option to the mongo command.
+
+// Use the 'find' method to search for documents where the 'name' field starts with "Holberton".
+// The regex "^Holberton" matches any string that begins with "Holberton".
+db.school.find(
+    { name: { $regex: "^Holberton" } }
+);

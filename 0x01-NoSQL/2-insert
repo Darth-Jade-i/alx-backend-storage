@@ -1,0 +1,10 @@
+// a script that inserts a document in the collection 'school'
+
+// Here, "my_db" is the database name passed as an argument
+// db = db.getSiblingDB("my_db");
+
+// Insert a document into the 'school' collection with
+// the attribute 'name' set to 'Holberton school'.
+db.school.insert({
+    name: "Holberton school"
+});

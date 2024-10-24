@@ -1,0 +1,10 @@
+// Connect to the specified database and list all documents with name="Holberton school" in the 'school' collection
+
+// Here, "my_db" is the database name passed as an argument
+// db = db.getSiblingDB("my_db");
+
+// Query the 'school' collection in the currently selected database
+// Specify the query condition to match documents where the 'name' field equals "Holberton school"
+db.school.find({
+    name: "Holberton school"
+});

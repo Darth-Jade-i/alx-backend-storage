@@ -1,0 +1,19 @@
+// This script updates documents in the 'school' collection where the name is "Holberton school"
+// It adds a new attribute 'address' with the value "972 Mission street" to these documents
+
+// Here, "my_db" is the database name passed as an argument
+// db = db.getSiblingDB("my_db");
+
+// Use the 'updateMany()' method to update all documents with name "Holberton school"
+// Set the new 'address' attribute to "972 Mission street"
+// db.school.updateMany(
+//     { name: "Holberton school" },  // Match condition: documents with name "Holberton school"
+//     { $set: { address: "972 Mission street" } }  // Update operation: set the 'address' attribute
+// );
+
+// Use the 'update()' method to update all matching documents with the 'multi: true' option
+db.school.update(
+    { name: "Holberton school" },  // Match condition: documents with name "Holberton school"
+    { $set: { address: "972 Mission street" } },  // Update operation: set the 'address' attribute
+    { multi: true }  // Option to update multiple documents
+);
