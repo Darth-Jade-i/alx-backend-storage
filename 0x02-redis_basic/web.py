@@ -1,140 +1,94 @@
 #!/usr/bin/env python3
-"""Module for implementing an expiring web cache and tracker with improved error handling
-and thread safety.
+"""Module for implementing an expiring web cache and tracker
 """
 import requests
 import time
-import threading
 from functools import wraps
-from typing import Dict, Any, Optional
-from datetime import datetime
 
-class WebCache:
-    """Class to manage web page caching and access tracking."""
+# Cache configuration
+CACHE_EXPIRATION_TIME = 10  # seconds
+CACHE = {}
 
-    def __init__(self, expiration_time: int = 10):
-        """Initialize the cache with configurable expiration time.
-
-        Args:
-            expiration_time (int): Cache expiration time in seconds
-        """
-        self._cache: Dict[str, Dict[str, Any]] = {}
-        self._lock = threading.Lock()
-        self.expiration_time = expiration_time
-
-    def get_cache_entry(self, url: str) -> Optional[Dict[str, Any]]:
-        """Get a cache entry if it exists and is not expired.
-
-        Args:
-            url (str): The URL to check in cache
-
-        Returns:
-            Optional[Dict[str, Any]]: Cache entry if valid, None otherwise
-        """
-        with self._lock:
-            if url not in self._cache:
-                return None
-
-            entry = self._cache[url]
-            if time.time() - entry["timestamp"] > self.expiration_time:
-                del self._cache[url]
-                return None
-
-            entry["count"] += 1
-            return entry
-
-    def set_cache_entry(self, url: str, content: str) -> None:
-        """Set a new cache entry for a URL.
-
-        Args:
-            url (str): The URL to cache
-            content (str): The content to cache
-        """
-        with self._lock:
-            self._cache[url] = {
-                "content": content,
-                "timestamp": time.time(),
-                "count": 1
-            }
-
-    def get_access_count(self, url: str) -> int:
-        """Get the number of times a URL has been accessed.
-
-        Args:
-            url (str): The URL to check
-
-        Returns:
-            int: Number of times the URL was accessed
-        """
-        with self._lock:
-            return self._cache.get(url, {}).get("count", 0)
-
-# Create a global cache instance
-cache_manager = WebCache()
-
-def cache(func):
+def cache(fn):
     """Decorator that implements a caching system with expiration and access tracking.
 
     Args:
-        func: The function to be decorated
+        fn (callable): The function to be decorated.
 
     Returns:
-        callable: The wrapped function with caching functionality
+        callable: The wrapped function with caching functionality.
     """
-    @wraps(func)
-    def wrapper(url: str, *args, **kwargs) -> str:
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
         """Wrapper function that implements the caching logic.
 
         Args:
-            url (str): The URL to fetch
-            *args: Variable length argument list
-            **kwargs: Arbitrary keyword arguments
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
 
         Returns:
-            str: The cached or newly fetched content
-
-        Raises:
-            requests.RequestException: If the URL fetch fails
+            str: The cached or newly fetched content.
         """
-        # Try to get from cache first
-        cached = cache_manager.get_cache_entry(url)
-        if cached:
-            return cached["content"]
+        url = args[0]
+        current_time = time.time()
+
+        # Clean up expired entries
+        for cached_url in list(CACHE.keys()):
+            if CACHE[cached_url]["timestamp"] + CACHE_EXPIRATION_TIME <= current_time:
+                del CACHE[cached_url]
+
+        # Check if URL is in cache and not expired
+        if url in CACHE:
+            cache_data = CACHE[url]
+            if cache_data["timestamp"] + CACHE_EXPIRATION_TIME > current_time:
+                cache_data["count"] += 1
+                return cache_data["content"]
 
         # Fetch new content if not in cache or expired
-        content = func(url, *args, **kwargs)
-        cache_manager.set_cache_entry(url, content)
+        content = fn(*args, **kwargs)
+        CACHE[url] = {
+            "content": content,
+            "timestamp": current_time,
+            "count": 1
+        }
         return content
 
-    return wrapper
+    return wrapped
 
 @cache
 def get_page(url: str) -> str:
     """Fetches the content of a web page and tracks the access count.
 
     Args:
-        url (str): The URL of the webpage to fetch
+        url (str): The URL of the webpage to fetch.
 
     Returns:
-        str: The decoded content of the webpage
-
-    Raises:
-        requests.RequestException: If the URL fetch fails
+        str: The decoded content of the webpage.
     """
-    try:
-        response = requests.get(url, timeout=30)
-        response.raise_for_status()
-        return response.text
-    except requests.RequestException as e:
-        raise requests.RequestException(f"Failed to fetch {url}: {str(e)}")
+    response = requests.get(url)
+    return response.text
 
 def get_access_count(url: str) -> int:
     """Gets the number of times a URL has been accessed.
 
     Args:
-        url (str): The URL to check
+        url (str): The URL to check.
 
     Returns:
-        int: The number of times the URL has been accessed
+        int: The number of times the URL has been accessed, or 0 if URL is not in cache
+            or has expired.
     """
-    return cache_manager.get_access_count(url)
+    current_time = time.time()
+
+    # Clean up expired entries before checking count
+    for cached_url in list(CACHE.keys()):
+        if CACHE[cached_url]["timestamp"] + CACHE_EXPIRATION_TIME <= current_time:
+            del CACHE[cached_url]
+
+    # Return count only if URL exists and is not expired
+    if url in CACHE:
+        cache_data = CACHE[url]
+        if cache_data["timestamp"] + CACHE_EXPIRATION_TIME > current_time:
+            return cache_data["count"]
+
+    return 0
